@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Code Attendance</title>
+    <script>
+        function sendAttendance() {
+            
+            const urlParams = new URLSearchParams(window.location.search);
+            const id = urlParams.get('id');
+            const name = urlParams.get('name');
+
+            if (!id || !name) {
+                alert("Invalid QR Code!");
+                return;
+            }
+
+    
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function (position) {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+
+                
+                    const scriptURL = "https://script.google.com/macros/s/AKfycbwpbvLpke78nbxTyfJi1N9AGv-sNFMWMyS9Cy6cUHzD5EG7hA13FjIyiPDzLFQeKwIomw/exec";
+                    const finalURL = `${scriptURL}?id=${id}&name=${encodeURIComponent(name)}&lat=${lat}&lng=${lng}`;
+                    window.location.href = finalURL;
+                }, function () {
+                    alert("Location access denied!");
+                });
+            } else {
+                alert("Geolocation is not supported.");
+            }
+        }
+    </script>
+</head>
+<body onload="sendAttendance()">
+    <h2>Recording Attendance...</h2>
+</body>
+</html>
