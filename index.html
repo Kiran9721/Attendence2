@@ -3,94 +3,76 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QR Code Attendance</title>
+    <title>Employee Attendance</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             text-align: center;
-            padding: 20px;
             background-color: #f4f4f4;
         }
         .container {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-            width: 90%;
             max-width: 400px;
-            margin: auto;
+            margin: 50px auto;
+            padding: 20px;
+            background: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
         }
-        h2 {
-            color: #333;
+        .logo {
+            max-width: 150px;
+            margin-bottom: 20px;
         }
-        .btn {
+        button {
             width: 100%;
             padding: 10px;
-            margin: 10px 0;
+            margin-top: 10px;
             border: none;
-            color: white;
-            font-size: 18px;
+            font-size: 16px;
             cursor: pointer;
             border-radius: 5px;
         }
-        .checkin { background-color: green; }
-        .checkout { background-color: red; }
-        .btn:hover { opacity: 0.8; }
+        .check-in {
+            background-color: green;
+            color: white;
+        }
+        .check-out {
+            background-color: red;
+            color: white;
+        }
     </style>
 </head>
 <body>
+    <div class="container">
+        <img src="gs.png" alt="Company Logo" class="logo">
+        <h2>Welcome, <span id="empName"></span></h2>
+        <p>Employee ID: <span id="empId"></span></p>
+        <button class="check-in" onclick="sendAttendance('Check-In')">Check In</button>
+        <button class="check-out" onclick="sendAttendance('Check-Out')">Check Out</button>
+    </div>
 
-<div class="container">
-    <h2>Welcome to Attendance System</h2>
-    <p id="status">Scan the QR Code to proceed</p>
-    
-    <button class="btn checkin" onclick="submitAttendance('Check-In')">✅ Check-In</button>
-    <button class="btn checkout" onclick="submitAttendance('Check-Out')">❌ Check-Out</button>
-</div>
-
-<script>
-function getLocation(callback) {
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-            function(position) {
-                let lat = position.coords.latitude;
-                let lng = position.coords.longitude;
-                callback(lat, lng);
-            },
-            function(error) {
-                alert("❌ Location access denied. Enable GPS and try again.");
-                callback("Unknown", "Unknown");
+    <script>
+        // Get URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const empId = urlParams.get('id');
+        const empName = urlParams.get('name');
+        document.getElementById('empName').innerText = empName || 'Unknown';
+        document.getElementById('empId').innerText = empId || 'Unknown';
+        
+        function sendAttendance(status) {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(position => {
+                    let lat = position.coords.latitude;
+                    let lng = position.coords.longitude;
+                    let url = `https://script.google.com/macros/s/AKfycbwOMbtyTEFGKWgR1krhc3_APiKhKeAY2TLNj4Az6--bNsjNQYm0v3tPy64iuo1DhFfuSw/exec?id=${empId}&name=${empName}&lat=${lat}&lng=${lng}&status=${status}`;
+                    fetch(url)
+                        .then(response => response.text())
+                        .then(data => alert(data))
+                        .catch(error => alert("Error: " + error));
+                }, () => alert("Location access denied!"));
+            } else {
+                alert("Geolocation is not supported by this browser.");
             }
-        );
-    } else {
-        alert("❌ Geolocation not supported by your browser.");
-        callback("Unknown", "Unknown");
-    }
-}
-
-function submitAttendance(status) {
-    getLocation((lat, lng) => {
-        let params = new URLSearchParams(window.location.search);
-        let id = params.get("id");
-        let name = params.get("name");
-
-        if (!id || !name) {
-            alert("❌ Invalid QR Code. Please scan again.");
-            return;
         }
-
-        let apiUrl = "https://script.google.com/macros/s/AKfycbxeazphjn_QchuFx2RuolKXNI9s9KwC3_5K0dLEggAXETrTwDIwtVQA1gUkFg_85agh9w/exec" + 
-                     `?id=${id}&name=${name}&lat=${lat}&lng=${lng}&status=${status}`;
-
-        fetch(apiUrl)
-        .then(response => response.text())
-        .then(data => {
-            document.getElementById("status").innerHTML = `<b>${data}</b>`;
-        })
-        .catch(error => alert("❌ Error: " + error));
-    });
-}
-</script>
-
+    </script>
 </body>
 </html>
