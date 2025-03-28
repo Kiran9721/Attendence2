@@ -66,43 +66,32 @@
     </div>
 
     <script>
-        function getQueryParam(param) {
-            let urlParams = new URLSearchParams(window.location.search);
-            return urlParams.get(param);
+    function recordAttendance(status) {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(position => {
+                let lat = position.coords.latitude;
+                let lng = position.coords.longitude;
+
+                let scriptURL = "https://script.google.com/macros/s/AKfycby2uwQjb7lY7vogh_yJKxDqabIZ5a4w9OaVF1QSK5GZ/exec";  
+                let requestURL = `${scriptURL}?id=${empId}&name=${empName}&lat=${lat}&lng=${lng}&status=${encodeURIComponent(status)}`;  // ✅ Fix status passing
+
+                fetch(requestURL)
+                    .then(response => response.text())
+                    .then(data => {
+                        document.getElementById("status").innerHTML = `✅ ${status} Recorded Successfully!`;
+                    })
+                    .catch(error => {
+                        document.getElementById("status").innerHTML = "❌ Error: " + error;
+                    });
+
+            }, error => {
+                document.getElementById("status").innerHTML = "❌ Location access denied.";
+            });
+        } else {
+            document.getElementById("status").innerHTML = "❌ Geolocation is not supported.";
         }
-
-        let empId = getQueryParam("id");
-        let empName = getQueryParam("name");
-
-        document.getElementById("empId").innerText = empId;
-        document.getElementById("empName").innerText = empName;
-
-        function recordAttendance(status) {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(position => {
-                    let lat = position.coords.latitude;
-                    let lng = position.coords.longitude;
-
-                    let scriptURL = "https://script.google.com/macros/s/AKfycby_D9scxIbZ90Bq0f1YAPy0a4JvRpHXJNwkU1EF5u5OBA3OwLbBnfizV68tCQDKfEga9w/exec";
-                    let requestURL = `${scriptURL}?id=${empId}&name=${empName}&lat=${lat}&lng=${lng}&status=${status}`;
-
-                    fetch(requestURL)
-                        .then(response => response.text())
-                        .then(data => {
-                            document.getElementById("status").innerHTML = `✅ ${status} Recorded Successfully!`;
-                        })
-                        .catch(error => {
-                            document.getElementById("status").innerHTML = "❌ Error: " + error;
-                        });
-
-                }, error => {
-                    document.getElementById("status").innerHTML = "❌ Location access denied.";
-                });
-            } else {
-                document.getElementById("status").innerHTML = "❌ Geolocation is not supported.";
-            }
-        }
-    </script>
+    }
+</script>
 
 </body>
 </html>
