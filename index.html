@@ -4,38 +4,72 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>QR Code Attendance</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsqr/1.0.0/jsQR.js"></script>
+</head>
+<body>
+    <h2>Scan QR Code for Attendance</h2>
+    <video id="qr-video" width="300" height="300" autoplay></video>
+    <p id="result"></p>
+
     <script>
-        function sendAttendance() {
-            
-            const urlParams = new URLSearchParams(window.location.search);
-            const id = urlParams.get('id');
-            const name = urlParams.get('name');
+        const video = document.getElementById("qr-video");
+        const result = document.getElementById("result");
 
-            if (!id || !name) {
-                alert("Invalid QR Code!");
-                return;
-            }
-
-    
+        // Function to get user's location
+        function getLocation(callback) {
             if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(function (position) {
-                    const lat = position.coords.latitude;
-                    const lng = position.coords.longitude;
-
-                
-                    const scriptURL = "https://script.google.com/macros/s/AKfycbwpbvLpke78nbxTyfJi1N9AGv-sNFMWMyS9Cy6cUHzD5EG7hA13FjIyiPDzLFQeKwIomw/exec";
-                    const finalURL = `${scriptURL}?id=${id}&name=${encodeURIComponent(name)}&lat=${lat}&lng=${lng}`;
-                    window.location.href = finalURL;
-                }, function () {
-                    alert("Location access denied!");
-                });
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const lat = position.coords.latitude;
+                        const lng = position.coords.longitude;
+                        callback(lat, lng);
+                    },
+                    () => {
+                        callback("Unknown", "Unknown");
+                    }
+                );
             } else {
-                alert("Geolocation is not supported.");
+                callback("Unknown", "Unknown");
             }
         }
+
+        // Function to send attendance data to Google Sheets
+        function sendAttendanceData(qrData, lat, lng) {
+            const url = `https://script.google.com/macros/s/AKfycbwEMECPkoKiL-RDeoWXEoDcPXBRCkmxij12P5UBDovHPlKHyfcEs9LnO00fLk_2hCCaBQ/exec?id=${qrData.id}&name=${qrData.name}&lat=${lat}&lng=${lng}`;
+            fetch(url)
+                .then(response => response.text())
+                .then(data => result.innerHTML = `<strong>${data}</strong>`)
+                .catch(error => result.innerHTML = `<strong>Error: ${error}</strong>`);
+        }
+
+        // Function to scan QR code
+        function scanQRCode() {
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+                .then(stream => {
+                    video.srcObject = stream;
+                    const canvas = document.createElement("canvas");
+                    const context = canvas.getContext("2d");
+
+                    function captureFrame() {
+                        canvas.width = video.videoWidth;
+                        canvas.height = video.videoHeight;
+                        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                        const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+                        const qrCode = jsQR(imageData.data, canvas.width, canvas.height);
+
+                        if (qrCode) {
+                            const qrData = JSON.parse(qrCode.data); // QR should contain {"id":"1234", "name":"Alice"}
+                            getLocation((lat, lng) => sendAttendanceData(qrData, lat, lng));
+                        } else {
+                            requestAnimationFrame(captureFrame);
+                        }
+                    }
+                    captureFrame();
+                })
+                .catch(err => console.error("Camera access denied", err));
+        }
+
+        scanQRCode();
     </script>
-</head>
-<body onload="sendAttendance()">
-    <h2>Recording Attendance...</h2>
 </body>
 </html>
