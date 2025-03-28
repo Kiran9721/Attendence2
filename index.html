@@ -79,7 +79,7 @@ function submitAttendance(status) {
             return;
         }
 
-        let apiUrl = "YOUR_DEPLOYED_SCRIPT_URL" + 
+        let apiUrl = "https://script.google.com/macros/s/AKfycbxeazphjn_QchuFx2RuolKXNI9s9KwC3_5K0dLEggAXETrTwDIwtVQA1gUkFg_85agh9w/exec" + 
                      `?id=${id}&name=${name}&lat=${lat}&lng=${lng}&status=${status}`;
 
         fetch(apiUrl)
