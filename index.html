@@ -3,14 +3,69 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Attendance Registration</title>
+    <title>Employee Attendance</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f4f4f4;
+            padding: 20px;
+        }
+        .container {
+            max-width: 400px;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+            margin: auto;
+            margin-top: 50px;
+        }
+        img {
+            width: 100px;
+            margin-bottom: 10px;
+        }
+        h2 {
+            margin-bottom: 15px;
+        }
+        .button {
+            width: 100%;
+            padding: 15px;
+            font-size: 16px;
+            margin: 10px 0;
+            border: none;
+            color: white;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        .check-in {
+            background-color: #28a745;
+        }
+        .check-out {
+            background-color: #dc3545;
+        }
+        .status {
+            margin-top: 15px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #555;
+        }
+    </style>
 </head>
 <body>
-    <h2>Recording Attendance...</h2>
-    <p id="status">Please wait, fetching your location...</p>
+
+    <div class="container">
+        <img src="https://your-company-logo-url.com/logo.png" alt="Company Logo">
+        <h2>Welcome, <span id="empName">Employee</span>!</h2>
+        <p>Your Employee ID: <strong id="empId">---</strong></p>
+        <p>Fetching your location...</p>
+
+        <button class="button check-in" onclick="recordAttendance('Check-In')">✅ Check In</button>
+        <button class="button check-out" onclick="recordAttendance('Check-Out')">❌ Check Out</button>
+
+        <p class="status" id="status"></p>
+    </div>
 
     <script>
-        // Get URL parameters (Employee ID & Name)
         function getQueryParam(param) {
             let urlParams = new URLSearchParams(window.location.search);
             return urlParams.get(param);
@@ -19,31 +74,35 @@
         let empId = getQueryParam("id");
         let empName = getQueryParam("name");
 
-        // Check if geolocation is available
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(position => {
-                let lat = position.coords.latitude;
-                let lng = position.coords.longitude;
+        document.getElementById("empId").innerText = empId;
+        document.getElementById("empName").innerText = empName;
 
-                let scriptURL = "https://script.google.com/macros/s/AKfycbyYdKaNVgTTVSX01O1dMygM9nWGay4-pDFJw3Xdz4Mvq_Au0Fj9ixzNbH0fk4y9iHFHxg/exec";
-                let requestURL = `${scriptURL}?id=${empId}&name=${empName}&lat=${lat}&lng=${lng}`;
+        function recordAttendance(status) {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(position => {
+                    let lat = position.coords.latitude;
+                    let lng = position.coords.longitude;
 
-                // Send data to Google Sheets
-                fetch(requestURL)
-                    .then(response => response.text())
-                    .then(data => {
-                        document.getElementById("status").innerHTML = "✅ Attendance Recorded Successfully!";
-                    })
-                    .catch(error => {
-                        document.getElementById("status").innerHTML = "❌ Error: " + error;
-                    });
+                    let scriptURL = "https://script.google.com/macros/s/AKfycb.../exec";
+                    let requestURL = `${scriptURL}?id=${empId}&name=${empName}&lat=${lat}&lng=${lng}&status=${status}`;
 
-            }, error => {
-                document.getElementById("status").innerHTML = "❌ Location access denied. Please allow location permissions.";
-            });
-        } else {
-            document.getElementById("status").innerHTML = "❌ Geolocation is not supported on your device.";
+                    fetch(requestURL)
+                        .then(response => response.text())
+                        .then(data => {
+                            document.getElementById("status").innerHTML = `✅ ${status} Recorded Successfully!`;
+                        })
+                        .catch(error => {
+                            document.getElementById("status").innerHTML = "❌ Error: " + error;
+                        });
+
+                }, error => {
+                    document.getElementById("status").innerHTML = "❌ Location access denied.";
+                });
+            } else {
+                document.getElementById("status").innerHTML = "❌ Geolocation is not supported.";
+            }
         }
     </script>
+
 </body>
 </html>
