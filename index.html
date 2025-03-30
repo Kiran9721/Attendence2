@@ -5,204 +5,552 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Employee Attendance</title>
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
         body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            background: linear-gradient(to bottom, red, white);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(to bottom, #ff5e62, #ff9966);
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            height: 100vh;
-            margin: 0;
+            overflow-x: hidden;
             position: relative;
+        }
+        
+        .container, .fingerprint-scanner, .confirmation-screen, .loading-screen {
+            display: none;
+        }
+        
+        /* Fingerprint Scanner */
+        .fingerprint-scanner {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+            padding: 20px;
             overflow: hidden;
         }
-        @keyframes snow {
-            from { transform: translateY(-10px); }
-            to { transform: translateY(100vh); }
-        }
-        .snowflake {
+        
+        /* Animated Background */
+        .animated-bg {
             position: absolute;
-            top: -10px;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+        
+        .color-bubble {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(30px);
+            opacity: 0.7;
+            transition: transform 0.5s ease;
+        }
+        
+        .scanner-header {
+            text-align: center;
+            margin-top: 50px;
             color: white;
-            opacity: 0.8;
-            font-size: 1em;
-            animation: snow linear infinite;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
-        .container {
-            background: rgba(255, 255, 255, 0.9);
+        
+        .scanner-header h1 {
+            font-size: 18px;
+            font-weight: 500;
+            margin-top: 10px;
+        }
+        
+        .scanner-logo {
+            max-width: 150px;
+            margin-bottom: 10px;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+        }
+        
+        .fingerprint-area {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            align-items: center;
+            padding-bottom: 50px;
+            width: 100%;
+            z-index: 2;
+        }
+        
+        .fingerprint-img {
+            width: 120px;
+            height: 120px;
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
             padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0px 0px 20px blue;
-            max-width: 90%;
-            width: 350px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+            backdrop-filter: blur(5px);
         }
+        
+        .fingerprint-img:active {
+            transform: scale(0.95);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        
+        .fingerprint-img img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            filter: drop-shadow(0 0 3px rgba(255,255,255,0.7));
+        }
+        
+        .scan-text {
+            color: white;
+            font-size: 16px;
+            margin-top: 15px;
+            text-align: center;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        /* Loading Screen */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 900;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+        
+        .loading-circle {
+            width: 80px;
+            height: 80px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .loading-text {
+            font-size: 18px;
+            color: #333;
+        }
+        
+        /* Attendance Form */
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            width: 90%;
+            max-width: 350px;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+        
+        .container.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
         .logo {
-            max-width: 120px;
-            margin-bottom: 15px;
+            max-width: 100px;
+            margin-bottom: 20px;
         }
+        
+        h2 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 22px;
+        }
+        
+        .employee-info {
+            color: #666;
+            margin-bottom: 20px;
+            font-size: 16px;
+        }
+        
+        .employee-info p {
+            margin-bottom: 5px;
+        }
+        
         button {
             width: 100%;
-            padding: 10px;
-            margin-top: 10px;
+            padding: 15px;
+            margin-top: 15px;
             border: none;
             font-size: 16px;
             cursor: pointer;
-            border-radius: 5px;
-            transition: 0.3s;
+            border-radius: 8px;
+            transition: transform 0.3s, box-shadow 0.3s;
             text-transform: uppercase;
-            font-weight: bold;
+            font-weight: 600;
+            letter-spacing: 1px;
         }
+        
+        button:active {
+            transform: scale(0.98);
+        }
+        
         .check-in {
-            background: linear-gradient(45deg, #00ff00, #008000);
+            background: linear-gradient(45deg, #2ecc71, #27ae60);
             color: white;
-            box-shadow: 0px 0px 15px green;
+            box-shadow: 0 4px 15px rgba(46, 204, 113, 0.4);
         }
-        .check-in:hover {
-            background: #006600;
-        }
+        
         .check-out {
-            background: linear-gradient(45deg, #ff0000, #800000);
+            background: linear-gradient(45deg, #e74c3c, #c0392b);
             color: white;
-            box-shadow: 0px 0px 15px red;
+            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.4);
         }
-        .check-out:hover {
-            background: #660000;
-        }
+        
         .footer {
             width: 100%;
-            padding: 10px;
-            border-top: 2px solid black;
-            position: absolute;
-            bottom: 0;
+            padding: 15px;
             background: rgba(255, 255, 255, 0.9);
             text-align: center;
-        }
-        .fingerprint-scanner {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background: rgba(0, 0, 0, 0.7);
             position: fixed;
-            width: 100%;
+            bottom: 0;
+            color: #555;
+            font-size: 14px;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+            display: none;
+        }
+        
+        /* Wait Screen */
+        .wait-screen {
+            position: fixed;
             top: 0;
             left: 0;
-            z-index: 1000;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+            display: none;
             flex-direction: column;
-        }
-        .scanner-box {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            text-align: center;
-            box-shadow: 0px 0px 20px blue;
-            display: flex;
-            flex-direction: column;
+            justify-content: center;
             align-items: center;
+            z-index: 1100;
+            opacity: 0;
+            transition: opacity 0.5s ease;
         }
-        .scanner-box img {
-            width: 100px;
-            cursor: pointer;
+        
+        .wait-text {
+            color: white;
+            font-size: 22px;
+            margin-bottom: 20px;
+            font-weight: 600;
         }
-        .loading-bar {
-            width: 100px;
-            height: 5px;
-            background: lightgray;
+        
+        .progress-container {
+            width: 80%;
+            max-width: 300px;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.2);
             border-radius: 5px;
             overflow: hidden;
-            margin-top: 10px;
-            display: flex;
-            justify-content: center;
         }
-        .loading-bar div {
+        
+        .progress-bar {
             height: 100%;
             width: 0;
-            background: blue;
-            animation: load 3s forwards;
+            background: linear-gradient(to right, #3498db, #2ecc71);
+            transition: width 3s linear;
         }
-        @keyframes load {
-            0% { width: 0; }
-            100% { width: 100%; }
+        
+        /* Confirmation Screen */
+        .confirmation-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, #2ecc71, #27ae60);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1200;
+            opacity: 0;
+            transition: opacity 0.5s ease;
         }
-        @media (max-width: 600px) {
-            .container {
-                width: 95%;
-                padding: 10px;
-            }
-            .scanner-box img {
-                width: 80px;
-            }
-            button {
-                font-size: 14px;
-                padding: 8px;
-            }
+        
+        .tick-container {
+            width: 100px;
+            height: 100px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        .tick {
+            color: #2ecc71;
+            font-size: 60px;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        .confirmation-text {
+            color: white;
+            font-size: 24px;
+            font-weight: 600;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         }
     </style>
 </head>
 <body>
+    <!-- Fingerprint Scanner -->
     <div class="fingerprint-scanner" id="scanner">
-        <div class="scanner-box">
-            <p>Scan your fingerprint to proceed</p>
-            <img src="fingerprint.png" alt="Fingerprint Scanner" onclick="verifyFingerprint()">
-            <div class="loading-bar" id="loading-bar" style="display: none;">
-                <div></div>
+        <div class="animated-bg" id="animated-bg"></div>
+        <div class="scanner-header">
+            <img src="gs.png" alt="Company Logo" class="scanner-logo">
+            <h1>Employee Attendance</h1>
+        </div>
+        <div class="fingerprint-area">
+            <div class="fingerprint-img" onclick="verifyFingerprint()">
+                <img src="fingerprint.png" alt="Fingerprint Scanner">
             </div>
+            <p class="scan-text">Place your finger to scan</p>
         </div>
     </div>
 
-    <div class="container" id="attendance-form" style="display: none;">
+    <!-- Loading Screen -->
+    <div class="loading-screen" id="loading-screen">
+        <div class="loading-circle"></div>
+        <p class="loading-text">Verifying...</p>
+    </div>
+
+    <!-- Attendance Form -->
+    <div class="container" id="attendance-form">
         <img src="gs.png" alt="Company Logo" class="logo">
         <h2>Welcome, <span id="empName"></span></h2>
-        <p>Employee ID: <span id="empId"></span></p>
+        <div class="employee-info">
+            <p>Employee Name: <span id="empNameDisplay"></span></p>
+            <p>Employee ID: <span id="empId"></span></p>
+        </div>
         <button class="check-in" onclick="sendAttendance('Check-In')">✅ Check In</button>
         <button class="check-out" onclick="sendAttendance('Check-Out')">❌ Check Out</button>
     </div>
 
-    <div class="footer">&copy; 2025 Gold Sphere. All Rights Reserved.</div>
+    <!-- Wait Screen -->
+    <div class="wait-screen" id="wait-screen">
+        <p class="wait-text">Please Wait</p>
+        <div class="progress-container">
+            <div class="progress-bar" id="progress-bar"></div>
+        </div>
+    </div>
+
+    <!-- Confirmation Screen -->
+    <div class="confirmation-screen" id="confirmation-screen">
+        <div class="tick-container">
+            <div class="tick">✓</div>
+        </div>
+        <p class="confirmation-text">Attendance Recorded</p>
+    </div>
+
+    <div class="footer" id="footer">&copy; 2025 Gold Sphere. All Rights Reserved.</div>
 
     <script>
+        // Show fingerprint scanner initially
+        document.getElementById("scanner").style.display = "flex";
+        
+        // Create animated background with random colors
+        function createAnimatedBackground() {
+            const animatedBg = document.getElementById('animated-bg');
+            const colors = [
+                '#FF5E62', '#FF9966', '#FFCD38', '#2EBDD1', '#7A59BA',
+                '#4CAF50', '#9C27B0', '#FF5722', '#3F51B5', '#E91E63'
+            ];
+            
+            // Create color bubbles
+            for (let i = 0; i < 10; i++) {
+                const bubble = document.createElement('div');
+                bubble.classList.add('color-bubble');
+                
+                // Random size between 100px and 300px
+                const size = Math.floor(Math.random() * 200) + 100;
+                bubble.style.width = `${size}px`;
+                bubble.style.height = `${size}px`;
+                
+                // Initial position
+                let x = Math.floor(Math.random() * 100);
+                let y = Math.floor(Math.random() * 100);
+                bubble.style.left = `${x}%`;
+                bubble.style.top = `${y}%`;
+                
+                // Random color
+                const colorIndex = Math.floor(Math.random() * colors.length);
+                bubble.style.backgroundColor = colors[colorIndex];
+                
+                animatedBg.appendChild(bubble);
+            }
+            
+            // Animate bubbles
+            animateBubbles();
+        }
+        
+        function animateBubbles() {
+            const bubbles = document.querySelectorAll('.color-bubble');
+            
+            bubbles.forEach(bubble => {
+                // Random new position
+                let x = Math.floor(Math.random() * 100);
+                let y = Math.floor(Math.random() * 100);
+                
+                // Set new position with transition
+                bubble.style.transform = `translate(${x - 50}%, ${y - 50}%)`;
+            });
+            
+            // Continue animation
+            setTimeout(animateBubbles, 3000);
+        }
+        
+        // Initialize animated background when page loads
+        createAnimatedBackground();
+        
         function verifyFingerprint() {
-            document.getElementById("loading-bar").style.display = "flex";
+            const scanner = document.getElementById("scanner");
+            const loadingScreen = document.getElementById("loading-screen");
+            
+            // Fade in loading screen
+            loadingScreen.style.display = "flex";
             setTimeout(() => {
-                document.getElementById("scanner").style.display = "none";
-                document.getElementById("attendance-form").style.display = "block";
-            }, 3000);
+                loadingScreen.style.opacity = "1";
+            }, 50);
+            
+            // Fade out scanner
+            setTimeout(() => {
+                scanner.style.opacity = "0";
+                setTimeout(() => {
+                    scanner.style.display = "none";
+                }, 500);
+            }, 500);
+            
+            // Show loading for 2 seconds then show attendance form
+            setTimeout(() => {
+                loadingScreen.style.opacity = "0";
+                setTimeout(() => {
+                    loadingScreen.style.display = "none";
+                    
+                    // Show attendance form and footer
+                    const attendanceForm = document.getElementById("attendance-form");
+                    const footer = document.getElementById("footer");
+                    
+                    attendanceForm.style.display = "block";
+                    footer.style.display = "block";
+                    
+                    // Animation for attendance form
+                    setTimeout(() => {
+                        attendanceForm.classList.add("visible");
+                    }, 50);
+                    
+                }, 500);
+            }, 2000);
         }
 
+        // Get URL parameters
         const urlParams = new URLSearchParams(window.location.search);
         const empId = urlParams.get('id');
         const empName = urlParams.get('name');
-        document.getElementById('empName').innerText = empName || 'Unknown';
+        document.getElementById('empName').innerText = empName || 'Employee';
+        document.getElementById('empNameDisplay').innerText = empName || 'Unknown';
         document.getElementById('empId').innerText = empId || 'Unknown';
-        
+
         function sendAttendance(status) {
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(position => {
                     let lat = position.coords.latitude;
                     let lng = position.coords.longitude;
                     let url = `https://script.google.com/macros/s/AKfycbwOMbtyTEFGKWgR1krhc3_APiKhKeAY2TLNj4Az6--bNsjNQYm0v3tPy64iuo1DhFfuSw/exec?id=${empId}&name=${empName}&lat=${lat}&lng=${lng}&status=${status}`;
-                    fetch(url)
-                        .then(response => response.text())
-                        .then(data => alert(data))
-                        .catch(error => alert("Error: " + error));
+                    
+                    const attendanceForm = document.getElementById("attendance-form");
+                    const waitScreen = document.getElementById("wait-screen");
+                    const progressBar = document.getElementById("progress-bar");
+                    const confirmScreen = document.getElementById("confirmation-screen");
+                    
+                    // Show wait screen with blur effect
+                    waitScreen.style.display = "flex";
+                    setTimeout(() => {
+                        waitScreen.style.opacity = "1";
+                        progressBar.style.width = "100%";
+                    }, 50);
+                    
+                    // Wait for 3 seconds with progress bar
+                    setTimeout(() => {
+                        // Fade out wait screen
+                        waitScreen.style.opacity = "0";
+                        
+                        setTimeout(() => {
+                            waitScreen.style.display = "none";
+                            progressBar.style.width = "0";
+                            
+                            // Show confirmation screen
+                            confirmScreen.style.display = "flex";
+                            setTimeout(() => {
+                                confirmScreen.style.opacity = "1";
+                            }, 50);
+                            
+                            fetch(url)
+                                .then(response => response.text())
+                                .catch(error => console.error("Error: " + error));
+                            
+                            // Hide confirmation after 2 seconds
+                            setTimeout(() => {
+                                confirmScreen.style.opacity = "0";
+                                setTimeout(() => {
+                                    confirmScreen.style.display = "none";
+                                    attendanceForm.classList.add("visible");
+                                }, 500);
+                            }, 2000);
+                            
+                        }, 500);
+                    }, 3000);
+                    
                 }, () => alert("Location access denied!"));
             } else {
                 alert("Geolocation is not supported by this browser.");
             }
         }
-        function createSnowflakes() {
-            for (let i = 0; i < 30; i++) {
-                let snowflake = document.createElement("div");
-                snowflake.innerHTML = "❄";
-                snowflake.classList.add("snowflake");
-                snowflake.style.left = Math.random() * 100 + "vw";
-                snowflake.style.animationDuration = Math.random() * 3 + 2 + "s";
-                document.body.appendChild(snowflake);
-            }
-        }
-        createSnowflakes();
     </script>
 </body>
 </html>
